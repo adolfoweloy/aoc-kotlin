@@ -13,3 +13,8 @@ tasks {
         gradleVersion = "8.5"
     }
 }
+
+dependencies {
+    // add kotlin script runtime dependency below
+    implementation(kotlin("script-runtime"))
+}
