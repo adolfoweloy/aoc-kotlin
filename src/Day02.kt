@@ -6,7 +6,7 @@ val rule = mapOf(
     "blue" to 14
 )
 
-val colors = listOf("red", "green", "blue")
+val colors = rule.keys
 
 fun main() {
     fun part1(input: List<String>): Int {
