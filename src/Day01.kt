@@ -23,13 +23,7 @@ fun getCalibrationValueFrom(input: String) =
             if (letter.isDigit()) {
                 letter.digitToInt()
             } else {
-                val word = input.possibleWordsFrom(idx)
-                    .find { NUMBERS.containsKey(it) }
-                if (word != null) {
-                    NUMBERS[word]!!
-                } else {
-                    null
-                }
+                input.possibleWordsFrom(idx).firstNotNullOfOrNull { NUMBERS[it] }
             }
         }.toList()
     )
