@@ -15,16 +15,29 @@ fun main() {
     val input = readInput("Day05")
     part1(input).println() // run it and dye waiting for an OOM Exception
     part2(input).println()
-
 }
 
-data class CategoryEntry(val destStart: Long, val srcStart: Long, val size: Long)
+
+data class CategoryEntry(val destStart: Long, val srcStart: Long, val size: Long) {
+    fun findDestination(seed: Long): Long? {
+        val rangeStart = srcStart..<srcStart+size
+        return if (seed in rangeStart) {
+            val addr = rangeStart.indexOf(seed) // too slow
+            destStart + addr
+        } else {
+            null
+        }
+    }
+}
+
+typealias CategoryEntries = List<CategoryEntry>
+fun CategoryEntries.getAddr(src: Long): Long = this
+    .map { it.findDestination(src) }
+    .filterNotNull()
+    .let { it.firstOrNull() ?: src }
 
 typealias Seed = Long
-typealias CategoryMap = Map<Long, Long>
-typealias CategoryMaps = List<CategoryMap>
-typealias CategoryEntries = List<CategoryEntry>
-typealias ListOfCategoryMaps = List<CategoryMaps>
+typealias ListOfCategoryEntries = List<CategoryEntries>
 
 typealias RawMappings = List<String>
 typealias RawMappingsCollection = Map<String, RawMappings>
@@ -75,7 +88,7 @@ fun RawMappingsCollectionAcc.moveToRawMappings() = RawMappingsCollectionAcc(
     emptyList()
 )
 
-fun List<String>.parse() =
+fun List<String>.parse(): RawMappingsCollectionAcc =
     map { Pair(it.inputType(), it) }
     .fold(RawMappingsCollectionAcc(emptyMap(), "", emptyList())) { acc, (inputType, line) ->
         when (inputType) {
@@ -87,32 +100,12 @@ fun List<String>.parse() =
 
 // transformation functions
 
-// crap! the input uses huge intervals! this solution doesn't work. 1billion entries in a map leads to OOM here :((
-fun CategoryEntry.generateCategoryMap(): CategoryMap = (0..<size)
-    .fold(emptyMap()) { acc, i -> acc + mapOf(srcStart + i to destStart + i) }
-
-fun CategoryEntry.generateCategoryMutableMap(): CategoryMap {
-    val result = mutableMapOf<Long, Long>()
-    (0..<size).forEach {i -> result[srcStart + i] = destStart + i }
-    return result
-}
-
 fun RawMappings.categoryEntries(): CategoryEntries = this
     .map { it.findNumbers() }
     .map { CategoryEntry(it[0], it[1], it[2]) }
 
-fun RawMappingsCollection.listOfCategoryMaps(): ListOfCategoryMaps = map { it.value
-    .categoryEntries()
-    .generateCategoryMaps()
-}
+fun RawMappingsCollection.listOfCategoryMaps(): ListOfCategoryEntries = map { it.value.categoryEntries() }
 
-fun CategoryEntries.generateCategoryMaps(): CategoryMaps = this.map { it.generateCategoryMutableMap() }
-
-fun fromMap(maps: CategoryMaps, input: Seed): Long = maps
-    .firstOrNull { it.containsKey(input) }
-    ?.let { it[input] }
-    ?: input
-
-fun ListOfCategoryMaps.findLocation(seed: Seed): Long = fold(seed) { seed, m -> fromMap(m, seed) }
+fun ListOfCategoryEntries.findLocation(seed: Seed): Long = fold(seed) { src, entries -> entries.getAddr(src) }
 
 
