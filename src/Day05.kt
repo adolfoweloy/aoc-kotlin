@@ -17,13 +17,10 @@ fun main() {
     part2(input).println()
 }
 
-
 data class CategoryEntry(val destStart: Long, val srcStart: Long, val size: Long) {
     fun findDestination(seed: Long): Long? {
-        val rangeStart = srcStart..<srcStart+size
-        return if (seed in rangeStart) {
-            val addr = rangeStart.indexOf(seed) // too slow
-            destStart + addr
+        return if (seed >= srcStart && seed<srcStart+size) {
+            destStart + (seed - srcStart)
         } else {
             null
         }
@@ -56,11 +53,7 @@ fun String.seeds() = """seeds:\s(.*)""".toRegex()
             .findNumbers()
     } ?: emptyList()
 
-enum class InputType {
-    CATEGORY_DESCRIPTION,
-    CATEGORY_MAPPING_DATA,
-    EMPTY_ROW
-}
+enum class InputType { CATEGORY_DESCRIPTION, CATEGORY_MAPPING_DATA, EMPTY_ROW }
 
 fun String.inputType() = when {
     (indexOf(':') > -1) -> InputType.CATEGORY_DESCRIPTION
