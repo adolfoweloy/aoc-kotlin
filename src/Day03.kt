@@ -1,8 +1,8 @@
 fun main() {
-    fun part1(input: List<String>) = input.asSequence().parse().partNumbers()
+    fun part1(input: List<String>) = input.asSequence().parseMappings().partNumbers()
         .sumOf { it.first.value }
 
-    fun part2(input: List<String>) = input.asSequence().parse().partNumbers()
+    fun part2(input: List<String>) = input.asSequence().parseMappings().partNumbers()
         .groupBy(
             keySelector = { it.second },
             valueTransform = { it.first }
@@ -60,7 +60,7 @@ fun Char.number(rowIndex: Int, idx: Int) = Element.Number(rowIndex, digitToInt()
 fun Char.symbol(rowIndex:Int, idx: Int) = Element.Symbol(rowIndex, this, idx)
 fun sep() = Element.Separator()
 
-fun String.parse(rowIndex: Int): Elements = foldIndexed(listOf()) { idx, acc, c -> when {
+fun String.parseMappings(rowIndex: Int): Elements = foldIndexed(listOf()) { idx, acc, c -> when {
     c.isDigit() -> acc.lastIfNumberOrNull()?.let { lastNum ->
         acc.replaceLast(lastNum.update(c.number(rowIndex, idx))) } ?: (acc + c.number(rowIndex, idx))
     c.isDot() -> acc.lastIfNumberOrNull()?.let { acc + sep() } ?:acc
@@ -70,7 +70,7 @@ fun String.parse(rowIndex: Int): Elements = foldIndexed(listOf()) { idx, acc, c 
 fun Numbers.adjacentTo(symbol: Element.Symbol) = filter { symbol.position in it.expandedRange() }
 
 // here is the meat of this solution
-fun Sequence<String>.parse() = mapIndexed { idx, row -> row.parse(idx).filterOutSeparators() }.filter { it.isNotEmpty() }
+fun Sequence<String>.parseMappings() = mapIndexed { idx, row -> row.parseMappings(idx).filterOutSeparators() }.filter { it.isNotEmpty() }
 
 fun Sequence<Elements>.partNumbers() = windowed(size = 2, step = 1)
     .fold<List<Elements>, NumbersWithSymbols>(emptyList()) { acc, row -> acc + computeWindow(row.first(), row.last()) }

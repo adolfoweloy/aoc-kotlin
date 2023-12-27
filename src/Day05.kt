@@ -1,20 +1,38 @@
 fun main() {
-    fun part1(input: List<String>) = Pair(
-            input.first().seeds(),
-            input.drop(2).parse().maps.listOfCategoryMaps())
-        .let { (seeds, categoryMaps) -> seeds.minOfOrNull { seed -> categoryMaps.findLocation(seed) }}
+    fun part1(input: List<String>) = input.parsePart1()
+        .let { (seeds, categoryMaps) -> seeds
+            .minOfOrNull { seed -> categoryMaps.findLocation(seed) }
+        }
 
-    fun part2(input: List<String>) = 0
+    fun part2(input: List<String>) = input.parsePart2()
+            .let { (seedsRange, categoryMaps) -> seedsRange.asSequence()
+                .map { fetchLocation(it, categoryMaps) }// fetching location for each range seems too slow
+                .min()
+            }
 
     // checking test inputs
     val testInput = readInput("Day05_test")
     check(part1(testInput) == 35L)
-    check(part2(testInput) == 0)
+    check(part2(testInput) == 46L)
 
     // print solutions
     val input = readInput("Day05")
     part1(input).println() // run it and dye waiting for an OOM Exception
     part2(input).println()
+}
+
+fun List<String>.parsePart1() = Pair(
+    first().seeds(),
+    drop(2).parseMappings().maps.listOfCategoryMaps())
+
+fun List<String>.parsePart2() = Pair(
+    this.first().seeds()
+        .chunked(2)
+        .map { it.first()..it.first()+it.last() },
+    this.drop(2).parseMappings().maps.listOfCategoryMaps())
+
+fun fetchLocation(range: LongRange, categoryMaps: ListOfCategoryEntries): Long {
+    return range.minOfOrNull { seed -> categoryMaps.findLocation(seed) } ?: 0
 }
 
 data class CategoryEntry(val destStart: Long, val srcStart: Long, val size: Long) {
@@ -28,9 +46,8 @@ data class CategoryEntry(val destStart: Long, val srcStart: Long, val size: Long
 }
 
 typealias CategoryEntries = List<CategoryEntry>
-fun CategoryEntries.getAddr(src: Long): Long = this
-    .map { it.findDestination(src) }
-    .filterNotNull()
+fun CategoryEntries.getAddress(src: Long): Long = this
+    .mapNotNull { it.findDestination(src) }
     .let { it.firstOrNull() ?: src }
 
 typealias Seed = Long
@@ -45,13 +62,13 @@ fun String.findNumbers() = this.trim()
     .split("\\s".toRegex())
     .map { it.trim().toLong() }
 
-fun String.seeds() = """seeds:\s(.*)""".toRegex()
+fun String.seeds() = """seeds:\s(.*)"""
+    .toRegex()
     .find(this)
-    ?.let {
-        it.groupValues
-            .last()
-            .findNumbers()
-    } ?: emptyList()
+    ?.groupValues?.last()
+    ?.findNumbers()
+    ?: emptyList()
+
 
 enum class InputType { CATEGORY_DESCRIPTION, CATEGORY_MAPPING_DATA, EMPTY_ROW }
 
@@ -81,7 +98,7 @@ fun RawMappingsCollectionAcc.moveToRawMappings() = RawMappingsCollectionAcc(
     emptyList()
 )
 
-fun List<String>.parse(): RawMappingsCollectionAcc =
+fun List<String>.parseMappings(): RawMappingsCollectionAcc =
     map { Pair(it.inputType(), it) }
     .fold(RawMappingsCollectionAcc(emptyMap(), "", emptyList())) { acc, (inputType, line) ->
         when (inputType) {
@@ -99,6 +116,6 @@ fun RawMappings.categoryEntries(): CategoryEntries = this
 
 fun RawMappingsCollection.listOfCategoryMaps(): ListOfCategoryEntries = map { it.value.categoryEntries() }
 
-fun ListOfCategoryEntries.findLocation(seed: Seed): Long = fold(seed) { src, entries -> entries.getAddr(src) }
+fun ListOfCategoryEntries.findLocation(seed: Seed): Long = fold(seed) { src, entries -> entries.getAddress(src) }
 
 
